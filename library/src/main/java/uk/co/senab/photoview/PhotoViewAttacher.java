@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Matrix.ScaleToFit;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
@@ -146,6 +147,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
     private int mScrollEdge = EDGE_BOTH;
 
     private boolean mZoomEnabled, mBoundsEnabled = true;
+    private RectF mBoundingRect;
     private ScaleType mScaleType = ScaleType.FIT_CENTER;
 
     public PhotoViewAttacher(ImageView imageView) {
@@ -666,6 +668,11 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
         mBoundsEnabled = bounded;
     }
 
+    @Override
+    public void setBoundInside(RectF boundingRect) {
+        mBoundingRect = boundingRect;
+    }
+
     public void update() {
         ImageView imageView = getImageView();
 
@@ -739,52 +746,68 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
         final float height = rect.height(), width = rect.width();
         float deltaX = 0, deltaY = 0;
 
-        final int viewHeight = getImageViewHeight(imageView);
-        if (height <= viewHeight) {
-            switch (mScaleType) {
-                case FIT_START:
-                    deltaY = -rect.top;
-                    break;
-                case FIT_END:
-                    deltaY = viewHeight - height - rect.top;
-                    break;
-                default:
-                    deltaY = (viewHeight - height) / 2 - rect.top;
-                    break;
+        if (mBoundsEnabled) {
+            int viewHeight = getImageViewHeight( imageView );
+            if (height <= viewHeight) {
+                switch (mScaleType) {
+                    case FIT_START:
+                        deltaY = -rect.top;
+                        break;
+                    case FIT_END:
+                        deltaY = viewHeight - height - rect.top;
+                        break;
+                    default:
+                        deltaY = (viewHeight - height) / 2 - rect.top;
+                        break;
+                }
             }
-        } else if (rect.top > 0) {
-            deltaY = -rect.top;
-        } else if (rect.bottom < viewHeight) {
-            deltaY = viewHeight - rect.bottom;
-        }
+            else if (rect.top > 0) {
+                deltaY = -rect.top;
+            }
+            else if (rect.bottom < viewHeight) {
+                deltaY = viewHeight - rect.bottom;
+            }
 
-        final int viewWidth = getImageViewWidth(imageView);
-        if (width <= viewWidth) {
-            switch (mScaleType) {
-                case FIT_START:
-                    deltaX = -rect.left;
-                    break;
-                case FIT_END:
-                    deltaX = viewWidth - width - rect.left;
-                    break;
-                default:
-                    deltaX = (viewWidth - width) / 2 - rect.left;
-                    break;
+            int viewWidth = getImageViewWidth( imageView );
+            if (width <= viewWidth) {
+                switch (mScaleType) {
+                    case FIT_START:
+                        deltaX = -rect.left;
+                        break;
+                    case FIT_END:
+                        deltaX = viewWidth - width - rect.left;
+                        break;
+                    default:
+                        deltaX = (viewWidth - width) / 2 - rect.left;
+                        break;
+                }
+                mScrollEdge = EDGE_BOTH;
             }
-            mScrollEdge = EDGE_BOTH;
-        } else if (rect.left > 0) {
-            mScrollEdge = EDGE_LEFT;
-            deltaX = -rect.left;
-        } else if (rect.right < viewWidth) {
-            deltaX = viewWidth - rect.right;
-            mScrollEdge = EDGE_RIGHT;
-        } else {
-            mScrollEdge = EDGE_NONE;
+            else if (rect.left > 0) {
+                mScrollEdge = EDGE_LEFT;
+                deltaX = -rect.left;
+            }
+            else if (rect.right < viewWidth) {
+                deltaX = viewWidth - rect.right;
+                mScrollEdge = EDGE_RIGHT;
+            }
+            else {
+                mScrollEdge = EDGE_NONE;
+            }
+        }
+        else if (mBoundingRect != null) {
+            if (rect.left < mBoundingRect.left)
+                deltaX = mBoundingRect.left - rect.left;
+            else if (rect.right > mBoundingRect.right)
+                deltaX = mBoundingRect.right - rect.right;
+            if (rect.top < mBoundingRect.top)
+                deltaY = mBoundingRect.top - rect.top;
+            else if (rect.bottom > mBoundingRect.bottom)
+                deltaY = mBoundingRect.bottom - rect.bottom;
         }
 
         // Finally actually translate the matrix
-        if (mBoundsEnabled)
-            mSuppMatrix.postTranslate(deltaX, deltaY);
+        mSuppMatrix.postTranslate( deltaX, deltaY );
 
         return true;
     }

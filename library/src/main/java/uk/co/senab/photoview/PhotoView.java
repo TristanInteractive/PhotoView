@@ -274,6 +274,11 @@ public class PhotoView extends ImageView implements IPhotoView {
     }
 
     @Override
+    public void setBoundInside(RectF boundingRect) {
+        mAttacher.setBoundInside( boundingRect );
+    }
+
+    @Override
     public Bitmap getVisibleRectangleBitmap() {
         return mAttacher.getVisibleRectangleBitmap();
     }

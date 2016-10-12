@@ -300,12 +300,19 @@ public interface IPhotoView {
     void setZoomable(boolean zoomable);
 
     /**
-     * Allows you to enable/disable jailing the image inside the view's bounds.  When disabled the
+     * Allows you to enable/disable jailing the image to the view's bounds.  When disabled the
      * image can be panned beyond the ImageView's bounds.
      *
      * @param bounded - Whether the image is bounded within the view.
      */
     void setBounded(boolean bounded);
+
+    /**
+     * Allows you to jail the image inside a given bounding rectangle.
+     *
+     * @param boundingRect - The bounds beyond which the image cannot be moved.
+     */
+    void setBoundInside(RectF boundingRect);
 
     /**
      * Enables rotation via PhotoView internal functions. Name is chosen so it won't collide with

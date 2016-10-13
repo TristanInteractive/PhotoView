@@ -1,4 +1,4 @@
-/*******************************************************************************
+/* ******************************************************************************
  * Copyright 2011, 2012 Chris Banes.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *******************************************************************************/
+ * ******************************************************************************/
 package uk.co.senab.photoview;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Matrix.ScaleToFit;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -36,6 +37,7 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 
 import java.lang.ref.WeakReference;
+import java.util.Locale;
 
 import uk.co.senab.photoview.gestures.OnGestureListener;
 import uk.co.senab.photoview.gestures.VersionedGestureDetector;
@@ -46,6 +48,7 @@ import static android.view.MotionEvent.ACTION_CANCEL;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_UP;
 
+@TargetApi(Build.VERSION_CODES.CUPCAKE)
 public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
         OnGestureListener,
         ViewTreeObserver.OnGlobalLayoutListener {
@@ -83,7 +86,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
     }
 
     /**
-     * @return true if the ImageView exists, and it's Drawable existss
+     * @return true if the ImageView exists, and it's Drawable exists
      */
     private static boolean hasDrawable(ImageView imageView) {
         return null != imageView && null != imageView.getDrawable();
@@ -111,7 +114,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
      * Set's the ImageView's ScaleType to Matrix.
      */
     private static void setImageViewScaleTypeMatrix(ImageView imageView) {
-        /**
+        /*
          * PhotoView sets it's own ScaleType to Matrix, then diverts all calls
          * setScaleType to this.setScaleType automatically.
          */
@@ -366,14 +369,14 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
 
         if (DEBUG) {
             LogManager.getLogger().d(LOG_TAG,
-                    String.format("onDrag: dx: %.2f. dy: %.2f", dx, dy));
+                    String.format(Locale.US, "onDrag: dx: %.2f. dy: %.2f", dx, dy));
         }
 
         ImageView imageView = getImageView();
         mSuppMatrix.postTranslate(dx, dy);
         checkAndDisplayMatrix();
 
-        /**
+        /*
          * Here we decide whether to let the ImageView's parent to start taking
          * over the touch event.
          *
@@ -424,7 +427,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
                 final int bottom = imageView.getBottom();
                 final int left = imageView.getLeft();
 
-                /**
+                /*
                  * We need to check whether the ImageView's bounds have changed.
                  * This would be easier if we targeted API 11+ as we could just use
                  * View.OnLayoutChangeListener. Instead we have to replicate the
@@ -453,7 +456,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
         if (DEBUG) {
             LogManager.getLogger().d(
                     LOG_TAG,
-                    String.format("onScale: scale: %.2f. fX: %.2f. fY: %.2f",
+                    String.format(Locale.US, "onScale: scale: %.2f. fX: %.2f. fY: %.2f",
                             scaleFactor, focusX, focusY));
         }
 
@@ -469,8 +472,10 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouch(View v, MotionEvent ev) {
-        boolean handled = false;
+        if (!v.isEnabled())
+            return false;
 
+        boolean handled = false;
         if (mZoomEnabled && hasDrawable((ImageView) v)) {
             ViewParent parent = v.getParent();
             switch (ev.getAction()) {
@@ -500,6 +505,9 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
                             handled = true;
                         }
                     }
+                    break;
+
+                default:
                     break;
             }
 
@@ -720,7 +728,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
     private void checkImageViewScaleType() {
         ImageView imageView = getImageView();
 
-        /**
+        /*
          * PhotoView's getScaleType() will just divert to this.getScaleType() so
          * only call if we're not attached to a PhotoView.
          */
@@ -833,6 +841,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
         return null;
     }
 
+    @Override
     public Bitmap getVisibleRectangleBitmap() {
         ImageView imageView = getImageView();
         return imageView == null ? null : imageView.getDrawingCache();
@@ -973,7 +982,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
      *
      * @author Chris Banes
      */
-    public static interface OnMatrixChangedListener {
+    public interface OnMatrixChangedListener {
         /**
          * Callback for when the Matrix displaying the Drawable has changed. This could be because
          * the View's bounds have changed, or the user has zoomed.
@@ -988,7 +997,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
      *
      * @author Marek Sebera
      */
-    public static interface OnScaleChangeListener {
+    public interface OnScaleChangeListener {
         /**
          * Callback for when the scale changes
          *
@@ -1005,7 +1014,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
      *
      * @author Chris Banes
      */
-    public static interface OnPhotoTapListener {
+    public interface OnPhotoTapListener {
 
         /**
          * A callback to receive where the user taps on a photo. You will only receive a callback if
@@ -1026,7 +1035,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
      *
      * @author Chris Banes
      */
-    public static interface OnViewTapListener {
+    public interface OnViewTapListener {
 
         /**
          * A callback to receive where the user taps on a ImageView. You will receive a callback if

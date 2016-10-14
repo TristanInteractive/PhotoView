@@ -679,6 +679,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener,
     @Override
     public void setBoundInside(RectF boundingRect) {
         mBoundingRect = boundingRect;
+        checkAndDisplayMatrix();
     }
 
     public void update() {
